@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <title>Собаки Шукаки — Алгоритм Безпеки</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+    :root {
+      --bg-main: #0b0e12;
+      --bg-panel: #1f2a37;
+      --accent: #ffd166;
+      --accent-soft: rgba(255, 209, 102, 0.12);
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --ok: #22c55e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #111827 0, #020617 55%, #000 100%);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* HEADER */
+
+    header {
+      padding: 12px 20px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      border: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+      box-shadow: 0 0 18px rgba(255, 209, 102, 0.35);
+    }
+
+    .brand-text-main {
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 14px;
+    }
+
+    .brand-text-sub {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pill {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      padding: 6px 10px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.75);
+    }
+
+    .pill-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--ok);
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.9);
+    }
+
+    .btn-donate {
+      background: var(--accent);
+      border-radius: 999px;
+      padding: 7px 16px;
+      border: none;
+      color: #1f2933;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      box-shadow:
+        0 0 18px rgba(255, 209, 102, 0.55),
+        0 0 2px rgba(0, 0, 0, 0.8);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-donate span {
+      font-size: 14px;
+    }
+
+    .btn-donate:hover {
+      transform: translateY(-1px);
+      box-shadow:
+        0 0 26px rgba(255, 209, 102, 0.7),
+        0 0 4px rgba(0, 0, 0, 0.8);
+    }
+
+    /* LAYOUT */
+
+    .layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      min-height: 0;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+      }
+    }
+
+    /* SIDE PANEL */
+
+    .sidebar {
+      background: linear-gradient(180deg, #020617 0, #020617 14%, #0b1120 100%);
+      border-right: 1px solid rgba(30, 64, 175, 0.3);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.10em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .status-card {
+      border-radius: 14px;
+      padding: 12px 12px;
+      background: radial-gradient(circle at top left, #111827 0, #020617 50%);
+      border: 1px solid rgba(55, 65, 81, 0.7);
+      box-shadow: 0 0 22px rgba(15, 23, 42, 0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .status-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .status-main {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      color: var(--text-muted);
+      background: rgba(15, 23, 42, 0.75);
+    }
+
+    .status-chip strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .status-grid {
+      margin-top: 6px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .status-mini {
+      border-radius: 10px;
+      padding: 6px 8px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 11px;
+    }
+
+    .status-mini-label {
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 9px;
+    }
+
+    .status-mini-value {
+      font-weight: 600;
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+
+    .status-mini-value span {
+      font-size: 11px;
+    }
+
+    .status-mini-value strong {
+      font-size: 12px;
+    }
+
+    .status-mini-tag {
+      font-size: 9px;
+      color: var(--text-muted);
+    }
+
+    .badge-risk {
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border: 1px solid var(--warning);
+      color: var(--warning);
+      background: rgba(251, 191, 36, 0.06);
+    }
+
+    .badge-risk.danger {
+      border-color: var(--danger);
+      color: #fecaca;
+      background: rgba(239, 68, 68, 0.08);
+    }
+
+    .badge-risk.ok {
+      border-color: var(--ok);
+      color: #bbf7d0;
+      background: rgba(16, 185, 129, 0.08);
+    }
+
+    /* THREAT LIST */
+
+    .threat-list {
+      margin-top: 4px;
+      border-radius: 12px;
+      padding: 10px 10px;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px dashed rgba(75, 85, 99, 0.9);
+      max-height: 260px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .threat-item {
+      border-radius: 10px;
+      padding: 6px 8px;
+      background: rgba(15, 23, 42, 0.98);
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      font-size: 11px;
+    }
+
+    .threat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .threat-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .threat-type {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+
+    .threat-meta {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .threat-tag {
+      font-size: 9px;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .hint {
+      margin-top: 2px;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .hint strong {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* MAP AREA */
+
+    .map-wrapper {
+      position: relative;
+      min-height: 0;
+      background: #020617;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+      min-height: 260px;
+      z-index: 1;
+    }
+
+    .map-overlay-top {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 800;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .map-mode-pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .map-mode-pill strong {
+      color: var(--accent);
+    }
+
+    .map-speed-pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .map-speed-pill button {
+      border: none;
+      background: transparent;
+      color: var(--accent);
+      font-size: 11px;
+      cursor: pointer;
+      padding: 2px 4px;
+    }
+
+    .map-overlay-bottom {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      z-index: 800;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-width: min(420px, 100% - 16px);
+    }
+
+    .map-log {
+      border-radius: 10px;
+      padding: 6px 8px;
+      font-size: 11px;
+      background: rgba(15, 23, 42, 0.86);
+      color: var(--text-muted);
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      max-height: 90px;
+      overflow: auto;
+    }
+
+    .map-log strong {
+      color: var(--accent);
+    }
+
+    .map-tip {
+      font-size: 10px;
+      color: var(--text-muted);
+      background: rgba(15, 23, 42, 0.85);
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px dashed rgba(55, 65, 81, 0.9);
+      width: fit-content;
+    }
+
+    /* Leaflet overrides */
+    .leaflet-control-attribution {
+      font-size: 9px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-logo">🐕</div>
+      <div>
+        <div class="brand-text-main">Собаки Шукаки</div>
+        <div class="brand-text-sub">Алгоритм безпеки · АБШ v0.1</div>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="pill">
+        <div class="pill-dot" id="pill-dot"></div>
+        LIVE · Мапа небезпек
+      </div>
+      <button class="btn-donate" onclick="alert('Тут можна відкрити посилання на банку / донат 🙂')">
+        <span>⚡</span> Підтримати підрозділ
+      </button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div>
+        <div class="sidebar-section-title">Поточний стан</div>
+        <div class="status-card">
+          <div class="status-top">
+            <div>
+              <div class="status-label">Стан сектора</div>
+              <div class="status-main">
+                <span id="status-emoji">🟢</span>
+                <span id="status-text">Спокійно</span>
+              </div>
+            </div>
+            <div id="risk-badge" class="badge-risk ok">Ризик низький</div>
+          </div>
+
+          <div class="status-chip">
+            RISK SCORE: <strong id="risk-score">0</strong>/100
+          </div>
+
+          <div class="status-grid">
+            <div class="status-mini">
+              <div class="status-mini-label">Цілі</div>
+              <div class="status-mini-value">
+                <strong id="targets-count">0</strong>
+                <span>активних</span>
+              </div>
+              <div class="status-mini-tag" id="targets-tag">немає загроз</div>
+            </div>
+
+            <div class="status-mini">
+              <div class="status-mini-label">РЕБ</div>
+              <div class="status-mini-value">
+                <strong id="rew-level-text">низький</strong>
+              </div>
+              <div class="status-mini-tag" id="rew-tag">канали стабільні</div>
+            </div>
+
+            <div class="status-mini">
+              <div class="status-mini-label">Погода</div>
+              <div class="status-mini-value">
+                <strong id="wx-short">OK</strong>
+              </div>
+              <div class="status-mini-tag" id="wx-tag">немає критичних факторів</div>
+            </div>
+
+            <div class="status-mini">
+              <div class="status-mini-label">Вікно польоту</div>
+              <div class="status-mini-value">
+                <strong id="flight-window">20 хв</strong>
+              </div>
+              <div class="status-mini-tag" id="flight-tag">умовно безпечно</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="sidebar-section-title">Деталізація загроз</div>
+        <div class="threat-list" id="threat-list">
+          <!-- JS додає елементи -->
+        </div>
+        <div class="hint">
+          💡 <strong>Порада:</strong> клік по мапі додає тестову “загрозу” (корисно, щоб погратись з логікою ризику).
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAP -->
+    <section class="map-wrapper">
+      <div id="map"></div>
+
+      <div class="map-overlay-top">
+        <div class="map-mode-pill">
+          Режим: <strong>АБШ · аеророзвідка</strong>
+        </div>
+        <div class="map-speed-pill">
+          НАЖИВО · 1x
+          <button type="button" onclick="togglePulse()">⏯</button>
+        </div>
+      </div>
+
+      <div class="map-overlay-bottom">
+        <div class="map-log" id="map-log">
+          <strong>Лог АБШ:</strong> ініціалізація алгоритму безпеки… Завантаження базових загроз.
+        </div>
+        <div class="map-tip">
+          👆 Натисни по мапі — додамо тренувальну загрозу для розрахунку ризику.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // ========= ТЕСТОВІ ДАНІ ЗАГРОЗ =========
+
+    const THREAT_TYPES = {
+      SHAHED: {
+        label: "Shahed / дрон-камікадзе",
+        emoji: "🛰️",
+        color: "#f97316",
+        baseRisk: 30,
+        short: "Дрон-камікадзе"
+      },
+      CRUISE: {
+        label: "Крилата ракета",
+        emoji: "🚀",
+        color: "#ef4444",
+        baseRisk: 40,
+        short: "Крилата ракета"
+      },
+      ARTY: {
+        label: "Артилерійський обстріл",
+        emoji: "💥",
+        color: "#e5e7eb",
+        baseRisk: 20,
+        short: "Артобстріл"
+      },
+      REW: {
+        label: "Активний РЕБ",
+        emoji: "📡",
+        color: "#22c55e",
+        baseRisk: 15,
+        short: "РЕБ"
+      },
+      FPV: {
+        label: "FPV-активність",
+        emoji: "🎯",
+        color: "#22d3ee",
+        baseRisk: 25,
+        short: "FPV"
+      }
+    };
+
+    let threats = [
+      {
+        id: "t1",
+        type: "SHAHED",
+        desc: "Ймовірний проліт Shahed по осі південь → центр",
+        intensity: 0.9,
+        lat: 49.5,
+        lng: 31,
+        distKm: 60
+      },
+      {
+        id: "t2",
+        type: "ARTY",
+        desc: "Локальний артобстріл в секторі схід",
+        intensity: 0.6,
+        lat: 48.9,
+        lng: 37.7,
+        distKm: 12
+      },
+      {
+        id: "t3",
+        type: "REW",
+        desc: "Посилення РЕБ, можливі збої звʼязку з дроном",
+        intensity: 0.7,
+        lat: 47.9,
+        lng: 35,
+        distKm: 8
+      }
+    ];
+
+    let map, threatLayer;
+    let pulseInterval = null;
+
+    // ========= ІНІЦІАЛІЗАЦІЯ МАПИ =========
+
+    function initMap() {
+      map = L.map("map", {
+        zoomControl: true,
+        minZoom: 5,
+        maxZoom: 12
+      }).setView([48.5, 31.2], 6);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap"
+      }).addTo(map);
+
+      threatLayer = L.layerGroup().addTo(map);
+
+      map.on("click", onMapClick);
+
+      renderThreats();
+      updateRiskAndUI();
+      logEvent("Мапу ініціалізовано. Загрози завантажено.");
+    }
+
+    // ========= РОБОТА З ЗАГРОЗАМИ =========
+
+    function renderThreats() {
+      threatLayer.clearLayers();
+
+      threats.forEach((t) => {
+        const meta = THREAT_TYPES[t.type];
+        if (!meta) return;
+
+        const marker = L.circleMarker([t.lat, t.lng], {
+          radius: 8 + t.intensity * 4,
+          color: meta.color,
+          weight: 2,
+          opacity: 0.9,
+          fillColor: meta.color,
+          fillOpacity: 0.35
+        });
+
+        const popupHtml = `
+          <div style="font-size:12px;">
+            <strong>${meta.emoji} ${meta.label}</strong><br/>
+            <span>${t.desc}</span><br/>
+            <span style="color:#9ca3af;">Інтенсивність: ${(t.intensity * 100).toFixed(0)}%</span><br/>
+            <span style="color:#9ca3af;">Відстань до групи: ${t.distKm.toFixed(1)} км</span>
+          </div>
+        `;
+
+        marker.bindPopup(popupHtml);
+        marker.addTo(threatLayer);
+      });
+
+      renderThreatList();
+    }
+
+    function renderThreatList() {
+      const list = document.getElementById("threat-list");
+      list.innerHTML = "";
+
+      if (!threats.length) {
+        list.innerHTML =
+          '<div class="threat-item"><div class="threat-header"><div class="threat-title"><span>✅</span><span>Активних загроз немає</span></div></div><div class="threat-meta">АБШ не фіксує суттєвих ризиків у секторі.</div></div>';
+        return;
+      }
+
+      threats.forEach((t) => {
+        const meta = THREAT_TYPES[t.type];
+        if (!meta) return;
+
+        const risk = computeThreatRiskScore(t);
+        const riskLabel =
+          risk > 70 ? "високий ризик" : risk > 40 ? "середній ризик" : "низький ризик";
+
+        const item = document.createElement("div");
+        item.className = "threat-item";
+        item.innerHTML = `
+          <div class="threat-header">
+            <div class="threat-title">
+              <span>${meta.emoji}</span>
+              <span>${meta.short}</span>
+            </div>
+            <div class="threat-type">${riskLabel}</div>
+          </div>
+          <div class="threat-meta">${t.desc}</div>
+          <div class="threat-meta">
+            Інтенсивність: ${(t.intensity * 100).toFixed(0)}% · Відстань: ${t.distKm.toFixed(
+              1
+            )} км
+          </div>
+          <div class="threat-tag">RISK SCORE: ${risk.toFixed(0)}/100</div>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    function computeThreatRiskScore(t) {
+      const meta = THREAT_TYPES[t.type];
+      if (!meta) return 0;
+
+      // базовий ризик типу
+      let score = meta.baseRisk;
+
+      // коригуємо за інтенсивністю
+      score *= 0.7 + t.intensity * 0.6; // 70–130%
+
+      // коригуємо за відстанню (чим ближче — тим гірше)
+      if (t.distKm < 10) score *= 1.3;
+      else if (t.distKm < 25) score *= 1.1;
+      else if (t.distKm > 70) score *= 0.8;
+
+      return Math.min(100, score);
+    }
+
+    function computeGlobalRisk(threats) {
+      if (!threats.length) return 0;
+      // беремо щось між max і середнім
+      const scores = threats.map(computeThreatRiskScore);
+      const max = Math.max(...scores);
+      const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+      return Math.round((max * 0.6 + avg * 0.4) * 0.95); // трохи зменшуємо
+    }
+
+    // ========= ОНОВЛЕННЯ UI =========
+
+    function updateRiskAndUI() {
+      const risk = computeGlobalRisk(threats);
+
+      const riskScoreEl = document.getElementById("risk-score");
+      const statusEmojiEl = document.getElementById("status-emoji");
+      const statusTextEl = document.getElementById("status-text");
+      const riskBadgeEl = document.getElementById("risk-badge");
+      const targetsCountEl = document.getElementById("targets-count");
+      const targetsTagEl = document.getElementById("targets-tag");
+      const rewLevelTextEl = document.getElementById("rew-level-text");
+      const rewTagEl = document.getElementById("rew-tag");
+      const wxShortEl = document.getElementById("wx-short");
+      const wxTagEl = document.getElementById("wx-tag");
+      const flightWindowEl = document.getElementById("flight-window");
+      const flightTagEl = document.getElementById("flight-tag");
+      const pillDot = document.getElementById("pill-dot");
+
+      riskScoreEl.textContent = risk;
+
+      let statusEmoji = "🟢";
+      let statusText = "Спокійно";
+      let riskBadgeText = "Ризик низький";
+      let riskBadgeClass = "badge-risk ok";
+
+      if (risk <= 20) {
+        statusEmoji = "🟢";
+        statusText = "Спокійно";
+        riskBadgeText = "Ризик низький";
+        riskBadgeClass = "badge-risk ok";
+      } else if (risk <= 40) {
+        statusEmoji = "🟡";
+        statusText = "Обережно";
+        riskBadgeText = "Ризик помірний";
+        riskBadgeClass = "badge-risk";
+      } else if (risk <= 65) {
+        statusEmoji = "🟠";
+        statusText = "Нестабільно";
+        riskBadgeText = "Ризик підвищений";
+        riskBadgeClass = "badge-risk";
+      } else {
+        statusEmoji = "🔴";
+        statusText = "Небезпечно";
+        riskBadgeText = "Ризик критичний";
+        riskBadgeClass = "badge-risk danger";
+      }
+
+      statusEmojiEl.textContent = statusEmoji;
+      statusTextEl.textContent = statusText;
+      riskBadgeEl.textContent = riskBadgeText;
+      riskBadgeEl.className = riskBadgeClass;
+
+      // кількість цілей
+      targetsCountEl.textContent = threats.length;
+      if (!threats.length) {
+        targetsTagEl.textContent = "немає загроз";
+      } else {
+        const types = new Set(threats.map((t) => THREAT_TYPES[t.type]?.short));
+        targetsTagEl.textContent = Array.from(types).join(" · ");
+      }
+
+      // рівень РЕБ — дивимось по загрозах типу REW
+      const rewThreats = threats.filter((t) => t.type === "REW");
+      let rewText = "низький";
+      let rewTag = "канали стабільні";
+
+      if (rewThreats.length) {
+        const maxRew = Math.max(...rewThreats.map((t) => t.intensity));
+        if (maxRew < 0.35) {
+          rewText = "низький";
+          rewTag = "канали стабільні";
+        } else if (maxRew < 0.7) {
+          rewText = "середній";
+          rewTag = "можливі збої каналу звʼязку";
+        } else {
+          rewText = "високий";
+          rewTag = "ризик втрати дрона через РЕБ";
+        }
+      }
+
+      rewLevelTextEl.textContent = rewText;
+      rewTagEl.textContent = rewTag;
+
+      // погода — поки що фейк, можна потім підʼєднати реальний API
+      wxShortEl.textContent = "OK";
+      wxTagEl.textContent = "вітер в нормі · видимість достатня";
+
+      // вікно польоту (чим більший risk, тим коротше вікно)
+      let flightMin = 25;
+      if (risk > 20 && risk <= 40) flightMin = 18;
+      else if (risk > 40 && risk <= 65) flightMin = 10;
+      else if (risk > 65) flightMin = 4;
+
+      flightWindowEl.textContent = flightMin + " хв";
+      flightTagEl.textContent =
+        risk <= 40 ? "умовно безпечно" : risk <= 65 ? "ризиковано, короткі вильоти" : "лише критичні задачі";
+
+      // колір лайв-точки
+      if (risk <= 40) {
+        pillDot.style.background = "var(--ok)";
+        pillDot.style.boxShadow = "0 0 8px rgba(16,185,129,0.9)";
+      } else if (risk <= 65) {
+        pillDot.style.background = "var(--warning)";
+        pillDot.style.boxShadow = "0 0 8px rgba(245,158,11,0.9)";
+      } else {
+        pillDot.style.background = "var(--danger)";
+        pillDot.style.boxShadow = "0 0 8px rgba(239,68,68,0.9)";
+      }
+    }
+
+    // ========= ЛОГИ =========
+
+    function logEvent(message) {
+      const logEl = document.getElementById("map-log");
+      const now = new Date();
+      const ts = now.toTimeString().slice(0, 8);
+      const line = `[${ts}] ${message}`;
+      logEl.innerHTML = `<strong>Лог АБШ:</strong><br>` + line + "<br>" + logEl.innerHTML.split("<br>").slice(2, 20).join("<br>");
+    }
+
+    // ========= ІНТЕРАКЦІЯ З МАПОЮ =========
+
+    function onMapClick(e) {
+      // додаємо тренувальну FPV загрозу в точці кліку
+      const newThreat = {
+        id: "click-" + Date.now(),
+        type: "FPV",
+        desc: "Тренувальна FPV-активність (додано кліком по мапі)",
+        intensity: 0.4 + Math.random() * 0.5,
+        lat: e.latlng.lat,
+        lng: e.latlng.lng,
+        distKm: 5 + Math.random() * 25
+      };
+
+      threats.push(newThreat);
+      renderThreats();
+      updateRiskAndUI();
+      logEvent("Додано тренувальну FPV-загрозу у точці кліку.");
+    }
+
+    // ========= ПУЛЬС / LIVE =========
+
+    function togglePulse() {
+      if (pulseInterval) {
+        clearInterval(pulseInterval);
+        pulseInterval = null;
+        logEvent("⏸ Пульс АБШ зупинено.");
+        return;
+      }
+      pulseInterval = setInterval(() => {
+        // трошки “дихаємо” інтенсивністю загроз
+        threats = threats.map((t) => {
+          const delta = (Math.random() - 0.5) * 0.12;
+          let newIntensity = t.intensity + delta;
+          newIntensity = Math.max(0.2, Math.min(1, newIntensity));
+          return { ...t, intensity: newIntensity };
+        });
+        renderThreats();
+        updateRiskAndUI();
+      }, 3500);
+      logEvent("▶ Пульс АБШ увімкнено (імітація зміни інтенсивності загроз).");
+    }
+
+    // ========= START =========
+
+    document.addEventListener("DOMContentLoaded", initMap);
+  </script>
+</body>
+</html>
